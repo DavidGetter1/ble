@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "Lab_2_Task_1_Peripheral",
+			"path": "."
+		},
+		{
+			"name": "Lab_2_Task_1_central",
+			"path": "../Lab_2_Task_1_central"
+		}
+	],
+	"settings": {}
+}
