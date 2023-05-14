@@ -226,11 +226,11 @@ int main(void)
     {
         // TODO memset problem idk
         memset(nodes, 0x00, sizeof(nodes));
-       // for (int i = 0; i < MAX_NODES; i++)
-       // {
-//
-       //     LOG_INF("after memsetting to 0 the addr at %d is %02x:%02x:%02x:%02x:%02x:%02x\n", i, nodes[i].bt_addr[0], nodes[i].bt_addr[1], nodes[i].bt_addr[2], nodes[i].bt_addr[3], nodes[i].bt_addr[4], nodes[i].bt_addr[5]);
-       // }
+        for (int i = 0; i < MAX_NODES; i++)
+        {
+        
+            LOG_INF("after memsetting to 0 the addr at %d is %02x:%02x:%02x:%02x:%02x:%02x\n", i, nodes[i].bt_addr[0], nodes[i].bt_addr[1], nodes[i].bt_addr[2], nodes[i].bt_addr[3], nodes[i].bt_addr[4], nodes[i].bt_addr[5]);
+        }
 
         node_data_bt_addr_ptr = &nodes[0].bt_addr;
         node_data_rand_node_number_ptr = &nodes[0].rand_node_number;
