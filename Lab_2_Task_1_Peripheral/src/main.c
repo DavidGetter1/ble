@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(ext_log_system);
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <stdio.h>
-#define SERVICE_DATA_LEN 10
+#define SERVICE_DATA_LEN 11
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 #define RECEIVED_DATA_LEN 16
@@ -26,6 +26,8 @@ LOG_MODULE_REGISTER(ext_log_system);
 uint8_t parent_bt_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 uint8_t own_bt_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+uint8_t round_counter = 0;
 
 uint8_t elements_in_buffer = 0;
 
@@ -55,9 +57,16 @@ uint8_t *buffer_ads_ptr = buffer_ads[0];
 
 void run_buffer()
 {
+    LOG_INF("%s", "Starting Buffer\n");
+    LOG_INF("Elems in buffer: %d\n", elements_in_buffer);
+   
     static bool is_running = false;
+     LOG_INF("Buffer is running: %d\n", is_running);
     if (is_running)
     {
+        return;
+    }
+    if(elements_in_buffer == 0){
         return;
     }
     is_running = true;
@@ -120,7 +129,9 @@ void run_buffer()
         buffer_ads[i][13] = 0x00;
     }
     buffer_runner_ptr = buffer_ads[0];
+    buffer_ads_ptr = buffer_ads[0];
     is_running = false;
+    LOG_INF("%s","buffer stopped");
 }
 
 bool is_data_in_buffer(uint8_t data[RECEIVED_DATA_LEN - 2])
@@ -131,19 +142,10 @@ bool is_data_in_buffer(uint8_t data[RECEIVED_DATA_LEN - 2])
     int i = 0, j = 0;
     for (i = 0; i < MAX_NODES; i++)
     {
-        int match = 1;
-        for (j = 0; j < RECEIVED_DATA_LEN; j++)
-        {
-            if (data[j] != buffer_ads[i][j])
-            {
-                match = 0;
-                break;
-            }
-        }
-        if (match)
-        {
-            return true;
-        }
+        LOG_INF("Comparing %02x:%02x:%02x:%02x:%02x:%02x with %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[i][8], buffer_ads[i][9], buffer_ads[i][10], buffer_ads[i][11], buffer_ads[i][12], buffer_ads[i][13], new_data[8], new_data[9], new_data[10], new_data[11], new_data[12], new_data[13]);
+       if(memcmp(buffer_ads[i], new_data, RECEIVED_DATA_LEN) == 0){
+           return true;
+       }
     }
     return false;
 }
@@ -160,7 +162,7 @@ bool is_initialized(uint8_t *arr, size_t size)
     return false;
 }
 
-uint8_t distance_counter = 0xFF;
+uint8_t distance_counter = 0x00;
 
 static void bt_ready(int err)
 {
@@ -189,7 +191,6 @@ static void bt_ready(int err)
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
                     struct net_buf_simple *buf)
 {
-    LOG_INF("%s", "mpu hunter vor inits");
     // Upon receiving, save in array, increment pointers
     uint16_t data_len = net_buf_simple_max_len(buf);
     uint8_t data = 0;
@@ -197,10 +198,8 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
     uint8_t received_data[RECEIVED_DATA_LEN - 2] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     uint8_t *received_data_ptr = received_data;
     bool put_in_received_data = false;
-    LOG_INF("%s", "mpu hunter nach inits");
     for (uint8_t i = 0; i < data_len; i++)
     {
-        printk("%02x ", *data_ptr);
 
         if (*data_ptr == 0x7c)
         {
@@ -210,6 +209,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
         if (put_in_received_data && *data_ptr != 0x7c)
         {
             *(received_data_ptr++) = *data_ptr;
+            printk("%02x:", *data_ptr);
         }
     }
     printk("\n");
@@ -218,17 +218,23 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
         // Hier wurde eine nachricht vom central node empfangen, es handelt sich entweder um die nachricht "Baue Baum" oder "Runde geht los"
         LOG_INF("%s", "Received message from central node");
         LOG_INF("The parent_bt_addr is initialized: %d", is_initialized(parent_bt_addr, sizeof(parent_bt_addr)));
-        if (received_data[0] < distance_counter && !is_initialized(parent_bt_addr, sizeof(parent_bt_addr)))
+        if (received_data[0] > round_counter)
         {
+            //TODO 13.05 peripherals schicken nachrichten mit 0er adressen
+            LOG_INF("%s", "Received message from central node, round starts");
             // Hier sind wir im Falle, dass wir den Baum bauen sollen, wir leiten die Nachricht die wir bekommen haben weiter
             // initialize parent_bt_addr
-            memcpy(parent_bt_addr, &received_data[1], sizeof(parent_bt_addr));
+            if(!is_initialized(parent_bt_addr, sizeof(parent_bt_addr))){
+                distance_counter = received_data[0];
+                memcpy(parent_bt_addr, &received_data[2], sizeof(parent_bt_addr));
+            }
+            round_counter = received_data[0];
             // increment distance counter
             // update advertisement data
-            distance_counter = received_data[0];
             uint8_t baum_ad_data[SERVICE_DATA_LEN] = {
                 0x7c,
-                distance_counter + 1, // distance_counter also acts as round_counter if higher than 0
+                received_data[0],      // round_counter 
+                distance_counter + 1, // distance_counter 
                 own_bt_addr[0],       // bt_addr 1
                 own_bt_addr[1],       // bt_addr 2
                 own_bt_addr[2],       // bt_addr 3
@@ -246,7 +252,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
             // start advertising
             bt_le_adv_start(BT_LE_ADV_NCONN_IDENTITY, ad_baum, ARRAY_SIZE(ad_baum), NULL, 0);
             // sleep
-            k_sleep(K_SECONDS(1));
+            k_sleep(K_SECONDS(2));
             // stop advertising
             LOG_INF("%s", "Stopping the 0x01 advertisement");
             int err = bt_le_adv_stop();
@@ -262,11 +268,14 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
             LOG_INF("OUR RANDOM NUMBER IS: %d", random_int[0]);
             // wir packen unser ad in den buffer
             *(buffer_ads_ptr + 1) = random_int[0];
-
+            LOG_INF("The parent bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", parent_bt_addr[0], parent_bt_addr[1], parent_bt_addr[2], parent_bt_addr[3], parent_bt_addr[4], parent_bt_addr[5]);
+            LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
             memcpy(buffer_ads_ptr + 2, parent_bt_addr, sizeof(parent_bt_addr));
             memcpy(buffer_ads_ptr + 8, own_bt_addr, sizeof(own_bt_addr));
             buffer_ads_ptr += 16;
-
+              LOG_INF("This is the whole message i just copied: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:",
+                buffer_ads[0][0], buffer_ads[0][1], buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7], buffer_ads[0][8], buffer_ads[0][9],
+                buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13], buffer_ads[0][14]);
             elements_in_buffer++;
         }
     }
@@ -294,11 +303,8 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
                 // TODO this should be wrong as im not targeting my parent
                 LOG_INF("%s", "adding to buffer");
                 memcpy(buffer_ads_ptr + 1, received_data, RECEIVED_DATA_LEN - 2);
-                LOG_INF("%s", "after potential mpu");
                 buffer_ads_ptr += 16;
-                LOG_INF("%s", "after potential mpu 1");
                 elements_in_buffer++;
-                LOG_INF("%s", "after potential mpu 2");
             }
         }
     }
