@@ -1,0 +1,71 @@
+:name: nRF52840 BLE on Zephyr
+
+# This script runs contains the configuration for a minimal BLE example with 9 nodes, 1 `central` and 8 `peripherals`
+# `central` is supposed to disseminate data but can't reach all of the `peripherals`.
+# `peripherals` have to execute and forward the request of the `central`.
+
+# The `using` command allows the user to omit a prefix when referring to a peripheral.
+# Here `using sysbus` allows to refer to `uart0` instead of `sysbus.uart0` and to `radio` instead of `sysbus.radio`. 
+using sysbus
+
+# Lines below declare binary files for Zephyr BLE devices. One for the central device and one for peripheral devices.
+# Binaries used here are defaults and can be replaced by changing variables below before running this script.
+$central_bin?=@firmwares/Lab_2_Task_3_Central.elf                            # update path here!
+$peripheral_bin?=@firmwares/Lab_2_Task_3_Peripheral.elf                      # update path here!
+
+
+# Declare location of our modified nRF52840 platform (with random BLE address).
+$board?=@platforms/cpus/nrf52840.repl                       # set path here
+
+# Create a wireless medium for communication.
+emulation CreateBLEMedium "wireless"
+
+# Choose the wireless fuction
+wireless SetRangeWirelessFunction 11                    # no signal exceeding range of 11 units
+# wireless SetRangeLossWirelessFunction 10 1.0 0.6      # linear fuction with no signal at a range exceeding 25 units
+
+# Create socket terminals to access the UART of each device through TCP
+emulation CreateServerSocketTerminal 60000 "term_central"                   # access output with e.g. `telnet localhost 60000`, exit telnet with Ctrl+], then type quit
+emulation CreateServerSocketTerminal 60001 "term_peripheral_1"              # access output with e.g. `telnet localhost 60001`
+
+
+
+# Create a machine named "central" based on the our modified nRF52840 platform (with random BLE address).
+# Connect the machine to our wireless medium, set its position, and connect its UART to the TCP socket.
+mach create "central"
+machine LoadPlatformDescription $board
+connector Connect radio wireless
+wireless SetPosition radio 0 0 0
+connector Connect uart0 term_central
+showAnalyzer uart0                                    # optionally show the UART output also as a seperate window
+
+
+# Create 8 machines named "peripheral_1" till "peripheral_8" based on the our modified nRF52840 platform (with random BLE address).
+# Connect the machine to our wireless medium, set its position, and connect its UART to the TCP socket.
+
+mach create "peripheral_1"
+machine LoadPlatformDescription $board
+connector Connect radio wireless
+wireless SetPosition radio 10 0 0
+connector Connect uart0 term_peripheral_1
+showAnalyzer uart0
+
+
+# Set Quantum value for CPUs. This is required by BLE stack.
+# Moreover, it allows better synchronisation between machines.
+emulation SetGlobalQuantum "0.00020"
+
+# The following series of commands is executed everytime the machine is reset.
+macro reset
+"""
+    mach set "central"
+    sysbus LoadELF $central_bin
+
+    mach set "peripheral_1"
+    sysbus LoadELF $peripheral_bin 
+
+"""
+runMacro $reset
+
+echo "Script loaded. Now start with with the 'start' or 's' command."
+echo ""
