@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(ext_log_system);
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 #define RECEIVED_DATA_LEN 16
-#define MAX_NODES 10
+#define MAX_NODES 25
 
 uint8_t parent_bt_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
@@ -57,11 +57,11 @@ uint8_t *buffer_ads_ptr = buffer_ads[0];
 
 void run_buffer()
 {
-    LOG_INF("%s", "Starting Buffer\n");
-    LOG_INF("Elems in buffer: %d\n", elements_in_buffer);
+  //  LOG_INF("%s", "Starting Buffer\n");
+  //  LOG_INF("Elems in buffer: %d\n", elements_in_buffer);
    
     static bool is_running = false;
-     LOG_INF("Buffer is running: %d\n", is_running);
+  //   LOG_INF("Buffer is running: %d\n", is_running);
     if (is_running)
     {
         return;
@@ -80,22 +80,22 @@ void run_buffer()
             BT_DATA(BT_DATA_SVC_DATA16, buffer_runner_ptr, RECEIVED_DATA_LEN),
         };
 
-        LOG_INF("The parent bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7]);
-        LOG_INF("The first bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[0][8], buffer_ads[0][9], buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13]);
-        LOG_INF("The second bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[1][8], buffer_ads[1][9], buffer_ads[1][10], buffer_ads[1][11], buffer_ads[1][12], buffer_ads[1][13]);
-        LOG_INF("This is the whole message im sending: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:",
-                buffer_ads[0][0], buffer_ads[0][1], buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7], buffer_ads[0][8], buffer_ads[0][9],
-                buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13], buffer_ads[0][14]);
-        LOG_INF("%02x\n", buffer_ads[0][15]);
+      //  LOG_INF("The parent bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7]);
+      //  LOG_INF("The first bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[0][8], buffer_ads[0][9], buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13]);
+      //  LOG_INF("The second bt_addr in buffer is %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[1][8], buffer_ads[1][9], buffer_ads[1][10], buffer_ads[1][11], buffer_ads[1][12], buffer_ads[1][13]);
+      //  LOG_INF("This is the whole message im sending: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:",
+       //        buffer_ads[0][0], buffer_ads[0][1], buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7], buffer_ads[0][8], buffer_ads[0][9],
+       //        buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13], buffer_ads[0][14]);
+       // LOG_INF("%02x\n", buffer_ads[0][15]);
 
-        int err = bt_le_adv_start(BT_LE_ADV_NCONN_IDENTITY, ad, ARRAY_SIZE(ad), NULL, 0);
+        int err = bt_le_adv_start(BT_LE_ADV_PARAM(BT_ID_DEFAULT, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL), ad, ARRAY_SIZE(ad), NULL, 0);
         if (err)
         {
             LOG_ERR("Advertising failed to start (err %d)\n", err);
             return;
         }
-        LOG_INF("%s", "Advertising successfully started\n");
-        k_sleep(K_SECONDS(1.5));
+       // LOG_INF("%s", "Advertising successfully started\n");
+        k_sleep(K_SECONDS(0.5));
         err = bt_le_adv_stop();
         if (err)
         {
@@ -114,7 +114,7 @@ void run_buffer()
             elements_in_buffer = 0;
             while_is_running = false;
             is_running = false;
-            LOG_INF("%s", "stopping Buffer\n");
+     //       LOG_INF("%s", "stopping Buffer\n");
         }
     }
     // after fiunishing buffer, reset buffer
@@ -131,7 +131,7 @@ void run_buffer()
     buffer_runner_ptr = buffer_ads[0];
     buffer_ads_ptr = buffer_ads[0];
     is_running = false;
-    LOG_INF("%s","buffer stopped");
+  //  LOG_INF("%s","buffer stopped");
 }
 
 bool is_data_in_buffer(uint8_t data[RECEIVED_DATA_LEN - 2])
@@ -142,7 +142,7 @@ bool is_data_in_buffer(uint8_t data[RECEIVED_DATA_LEN - 2])
     int i = 0, j = 0;
     for (i = 0; i < MAX_NODES; i++)
     {
-        LOG_INF("Comparing %02x:%02x:%02x:%02x:%02x:%02x with %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[i][8], buffer_ads[i][9], buffer_ads[i][10], buffer_ads[i][11], buffer_ads[i][12], buffer_ads[i][13], new_data[8], new_data[9], new_data[10], new_data[11], new_data[12], new_data[13]);
+     //   LOG_INF("Comparing %02x:%02x:%02x:%02x:%02x:%02x with %02x:%02x:%02x:%02x:%02x:%02x\n", buffer_ads[i][8], buffer_ads[i][9], buffer_ads[i][10], buffer_ads[i][11], buffer_ads[i][12], buffer_ads[i][13], new_data[8], new_data[9], new_data[10], new_data[11], new_data[12], new_data[13]);
        if(memcmp(buffer_ads[i], new_data, RECEIVED_DATA_LEN) == 0){
            return true;
        }
@@ -181,7 +181,7 @@ static void bt_ready(int err)
     bt_id_get(&addr, &count);
     // Hier sollte die bt_addr an den richtigen Ort kopiert werden
     memcpy(own_bt_addr, addr.a.val, 6);
-    LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
+   // LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
 
     bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
@@ -209,15 +209,13 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
         if (put_in_received_data && *data_ptr != 0x7c)
         {
             *(received_data_ptr++) = *data_ptr;
-            printk("%02x:", *data_ptr);
         }
     }
-    printk("\n");
     if (received_data[SERVICE_DATA_LEN - 3] == 0x01)
     {
         // Hier wurde eine nachricht vom central node empfangen, es handelt sich entweder um die nachricht "Baue Baum" oder "Runde geht los"
-        LOG_INF("%s", "Received message from central node");
-        LOG_INF("The parent_bt_addr is initialized: %d", is_initialized(parent_bt_addr, sizeof(parent_bt_addr)));
+      //  LOG_INF("%s", "Received message from central node");
+       // LOG_INF("The parent_bt_addr is initialized: %d", is_initialized(parent_bt_addr, sizeof(parent_bt_addr)));
         if (received_data[0] > round_counter)
         {
             //TODO 13.05 peripherals schicken nachrichten mit 0er adressen
@@ -250,11 +248,11 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
             };
 
             // start advertising
-            bt_le_adv_start(BT_LE_ADV_NCONN_IDENTITY, ad_baum, ARRAY_SIZE(ad_baum), NULL, 0);
+            bt_le_adv_start(BT_LE_ADV_PARAM(BT_ID_DEFAULT, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL), ad_baum, ARRAY_SIZE(ad_baum), NULL, 0);
             // sleep
-            k_sleep(K_SECONDS(2));
+            k_sleep(K_SECONDS(0.4));
             // stop advertising
-            LOG_INF("%s", "Stopping the 0x01 advertisement");
+           // LOG_INF("%s", "Stopping the 0x01 advertisement");
             int err = bt_le_adv_stop();
             if (err)
             {
@@ -265,17 +263,17 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
             // get random number
             uint8_t random_int[1] = {0};
             bt_rand(random_int, 1);
-            LOG_INF("OUR RANDOM NUMBER IS: %d", random_int[0]);
+         //   LOG_INF("OUR RANDOM NUMBER IS: %d", random_int[0]);
             // wir packen unser ad in den buffer
-            *(buffer_ads_ptr + 1) = random_int[0];
-            LOG_INF("The parent bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", parent_bt_addr[0], parent_bt_addr[1], parent_bt_addr[2], parent_bt_addr[3], parent_bt_addr[4], parent_bt_addr[5]);
-            LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
+            *(buffer_ads_ptr + 1) = random_int[0] % 101;
+          //  LOG_INF("The parent bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", parent_bt_addr[0], parent_bt_addr[1], parent_bt_addr[2], parent_bt_addr[3], parent_bt_addr[4], parent_bt_addr[5]);
+          //  LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
             memcpy(buffer_ads_ptr + 2, parent_bt_addr, sizeof(parent_bt_addr));
             memcpy(buffer_ads_ptr + 8, own_bt_addr, sizeof(own_bt_addr));
             buffer_ads_ptr += 16;
-              LOG_INF("This is the whole message i just copied: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:",
-                buffer_ads[0][0], buffer_ads[0][1], buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7], buffer_ads[0][8], buffer_ads[0][9],
-                buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13], buffer_ads[0][14]);
+           //   LOG_INF("This is the whole message i just copied: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:",
+            //    buffer_ads[0][0], buffer_ads[0][1], buffer_ads[0][2], buffer_ads[0][3], buffer_ads[0][4], buffer_ads[0][5], buffer_ads[0][6], buffer_ads[0][7], buffer_ads[0][8], buffer_ads[0][9],
+            //    buffer_ads[0][10], buffer_ads[0][11], buffer_ads[0][12], buffer_ads[0][13], buffer_ads[0][14]);
             elements_in_buffer++;
         }
     }
@@ -289,19 +287,19 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
         // Wenn die Nachricht an uns addressiert wird, dann leiten wir sie weiter
         // received_data[1] ist die bt_addr des nodes, an den die Nachricht adressiert ist
         // received_data[2] ist unsere Addresse
-        LOG_INF("The received bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", received_data[1], received_data[2], received_data[3], received_data[4], received_data[5], received_data[6]);
-        LOG_INF("Our bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
+      // LOG_INF("The received bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", received_data[1], received_data[2], received_data[3], received_data[4], received_data[5], received_data[6]);
+      // LOG_INF("Our bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", own_bt_addr[0], own_bt_addr[1], own_bt_addr[2], own_bt_addr[3], own_bt_addr[4], own_bt_addr[5]);
         // here we check if the advertisement is for us
         if (memcmp(&received_data[1], own_bt_addr, 6) == 0)
         {
             if (is_data_in_buffer(received_data))
             {
-                LOG_INF("%s", "already in buffer");
+          //      LOG_INF("%s", "already in buffer");
             }
             else
             {
                 // TODO this should be wrong as im not targeting my parent
-                LOG_INF("%s", "adding to buffer");
+            //    LOG_INF("%s", "adding to buffer");
                 memcpy(buffer_ads_ptr + 1, received_data, RECEIVED_DATA_LEN - 2);
                 buffer_ads_ptr += 16;
                 elements_in_buffer++;

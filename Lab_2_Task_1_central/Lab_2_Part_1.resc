@@ -10,8 +10,8 @@ using sysbus
 
 # Lines below declare binary files for Zephyr BLE devices. One for the central device and one for peripheral devices.
 # Binaries used here are defaults and can be replaced by changing variables below before running this script.
-$central_bin?=@firmwares/Lab_2_Task_1_central.elf                            # update path here!
-$peripheral_bin?=@firmwares/Lab_2_Task_1_peripheral.elf                      # update path here!
+$central_bin?=@firmwares/Lab_2_Task_3_Central.elf                            # update path here!
+$peripheral_bin?=@firmwares/Lab_2_Task_3_Peripheral.elf                      # update path here!
 
 
 # Declare location of our modified nRF52840 platform (with random BLE address).
@@ -27,7 +27,6 @@ wireless SetRangeWirelessFunction 11                    # no signal exceeding ra
 # Create socket terminals to access the UART of each device through TCP
 emulation CreateServerSocketTerminal 60000 "term_central"                   # access output with e.g. `telnet localhost 60000`, exit telnet with Ctrl+], then type quit
 emulation CreateServerSocketTerminal 60001 "term_peripheral_1"              # access output with e.g. `telnet localhost 60001`
-emulation CreateServerSocketTerminal 60002 "term_peripheral_2"              # access output with e.g. `telnet localhost 60002`
 
 
 
@@ -51,16 +50,10 @@ wireless SetPosition radio 10 0 0
 connector Connect uart0 term_peripheral_1
 showAnalyzer uart0
 
-mach create "peripheral_2"
-machine LoadPlatformDescription $board
-connector Connect radio wireless
-wireless SetPosition radio 20 0 0
-connector Connect uart0 term_peripheral_2
-showAnalyzer uart0
 
 # Set Quantum value for CPUs. This is required by BLE stack.
 # Moreover, it allows better synchronisation between machines.
-emulation SetGlobalQuantum "0.00050"
+emulation SetGlobalQuantum "0.00020"
 
 # The following series of commands is executed everytime the machine is reset.
 macro reset
@@ -69,9 +62,6 @@ macro reset
     sysbus LoadELF $central_bin
 
     mach set "peripheral_1"
-    sysbus LoadELF $peripheral_bin 
-
-    mach set "peripheral_2"
     sysbus LoadELF $peripheral_bin 
 
 """

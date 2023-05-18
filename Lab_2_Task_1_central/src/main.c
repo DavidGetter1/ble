@@ -22,7 +22,7 @@ LOG_MODULE_REGISTER(ext_log_system);
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
-#define MAX_NODES 9
+#define MAX_NODES 25
 
 static uint8_t service_data[SERVICE_DATA_LEN] = {
     0x7c,
@@ -62,18 +62,17 @@ void print_highest_rand_node_num(void)
 {
     uint8_t received_data_count = 0;
     uint8_t highest = 0;
-    uint8_t empty_bt_addr = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t empty_bt_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t bt_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t *bt_addr_ptr = &bt_addr[0];
     for (int i = 0; i < MAX_NODES; i++)
     {
         if (memcmp(nodes[i].bt_addr, empty_bt_addr, 6) != 0)
         {
-            LOG_INF("The corresponding bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", nodes[i].bt_addr[0], nodes[i].bt_addr[1], nodes[i].bt_addr[2], nodes[i].bt_addr[3], nodes[i].bt_addr[4], nodes[i].bt_addr[5]);
-
+         //   LOG_INF("The corresponding bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", nodes[i].bt_addr[0], nodes[i].bt_addr[1], nodes[i].bt_addr[2], nodes[i].bt_addr[3], nodes[i].bt_addr[4], nodes[i].bt_addr[5]);
             received_data_count++;
         }
-        LOG_INF("The rand_node_number of node %d is %d\n", i, nodes[i].rand_node_number);
+    //    LOG_INF("The rand_node_number of node %d is %d\n", i, nodes[i].rand_node_number);
         if (nodes[i].rand_node_number > highest)
         {
             highest = nodes[i].rand_node_number;
@@ -123,7 +122,7 @@ static void bt_ready(int err)
     // Hier sollte die bt_addr an den richtigen Ort kopiert werden
     memcpy(service_data_ptr, addr.a.val, 6);
     bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
-    LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", *service_data_ptr, *(service_data_ptr + 1), *(service_data_ptr + 2), *(service_data_ptr + 3), *(service_data_ptr + 4), *(service_data_ptr + 5));
+  //  LOG_INF("The own bt_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", *service_data_ptr, *(service_data_ptr + 1), *(service_data_ptr + 2), *(service_data_ptr + 3), *(service_data_ptr + 4), *(service_data_ptr + 5));
     printk("Beacon started, advertising as %s\n", addr_s);
 }
 
@@ -171,7 +170,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
 
             // copy address to array
             memcpy(node_data_bt_addr_ptr, &received_data[7], 6);
-            //    LOG_INF("THIS IS THE RECEIVED DATA: %02x:%02x:%02x:%02x:%02x:%02x \n", received_data[7], received_data[8], received_data[9], received_data[10], received_data[11], received_data[12]);
+            LOG_INF("I received data that is not in my array yet: %02x:%02x:%02x:%02x:%02x:%02x \n", received_data[7], received_data[8], received_data[9], received_data[10], received_data[11], received_data[12]);
             //    LOG_INF("THIS IS THE DATA THAT GOT COPIED:  %02x:%02x:%02x:%02x:%02x:%02x\n", node_data_bt_addr_ptr[0], node_data_bt_addr_ptr[1], node_data_bt_addr_ptr[2], node_data_bt_addr_ptr[3], node_data_bt_addr_ptr[4], node_data_bt_addr_ptr[5]);
 
             // copy received data to array
@@ -233,11 +232,6 @@ int main(void)
     {
         // TODO memset problem idk
         memset(nodes, 0x00, sizeof(nodes));
-        for (int i = 0; i < MAX_NODES; i++)
-        {
-        
-            LOG_INF("after memsetting to 0 the addr at %d is %02x:%02x:%02x:%02x:%02x:%02x\n", i, nodes[i].bt_addr[0], nodes[i].bt_addr[1], nodes[i].bt_addr[2], nodes[i].bt_addr[3], nodes[i].bt_addr[4], nodes[i].bt_addr[5]);
-        }
 
         node_data_bt_addr_ptr = &nodes[0].bt_addr;
         node_data_rand_node_number_ptr = &nodes[0].rand_node_number;

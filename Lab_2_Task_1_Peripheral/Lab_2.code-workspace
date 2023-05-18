@@ -7,6 +7,14 @@
 		{
 			"name": "Lab_2_Task_1_central",
 			"path": "../Lab_2_Task_1_central"
+		},
+		{
+			"name": "Lab_2_Task_3_Peripheral",
+			"path": "../../Lab_2_Task_3_Peripheral"
+		},
+		{
+			"name": "Lab_2_Task_3_Central",
+			"path": "../../Lab_2_Task_3_Central"
 		}
 	],
 	"settings": {}
